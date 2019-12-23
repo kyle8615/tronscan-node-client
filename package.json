@@ -1,6 +1,6 @@
 {
-  "name": "@tronscan/client",
-  "version": "0.2.12",
+  "name": "@kyle8615/client",
+  "version": "0.2.15",
   "description": "Tronscan API Client",
   "main": "src/index.js",
   "homepage": "https://api.tronscan.org/",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/tronscan/tronscan-node-client.git"
+    "url": "git@github.com:kyle8615/tronscan-node-client.git"
   },
   "keywords": [
     "tron"

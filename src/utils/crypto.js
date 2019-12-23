@@ -1,12 +1,26 @@
-const {ADDRESS_PREFIX, ADDRESS_PREFIX_BYTE} = require("./address");
+const {
+  ADDRESS_PREFIX,
+  ADDRESS_PREFIX_BYTE
+} = require("./address");
 const base64EncodeToString = require("../lib/code").base64EncodeToString;
-const {base64DecodeFromString, hexStr2byteArray} = require("../lib/code");
-const {encode58, decode58} = require("../lib/base58");
+const {
+  base64DecodeFromString,
+  hexStr2byteArray
+} = require("../lib/code");
+const {
+  encode58,
+  decode58
+} = require("../lib/base58");
 const EC = require('elliptic').ec;
-const { keccak256 } = require('js-sha3');
+const {
+  keccak256
+} = require('js-sha3');
 const jsSHA = require("../lib/sha256");
 const ADDRESS_SIZE = require("./address").ADDRESS_SIZE;
-const { byte2hexStr, byteArray2hexStr } = require("./bytes");
+const {
+  byte2hexStr,
+  byteArray2hexStr
+} = require("./bytes");
 
 /**
  * Sign A Transaction by priKey.
@@ -143,12 +157,12 @@ function isAddressValid(base58Str) {
     var hash0 = SHA256(address);
     var hash1 = SHA256(hash0);
     var checkSum1 = hash1.slice(0, 4);
-    if (checkSum[0] == checkSum1[0] && checkSum[1] == checkSum1[1] && checkSum[2]
-        == checkSum1[2] && checkSum[3] == checkSum1[3]
+    if (checkSum[0] == checkSum1[0] && checkSum[1] == checkSum1[1] && checkSum[2] ==
+      checkSum1[2] && checkSum[3] == checkSum1[3]
     ) {
       return true
     }
-  } catch(e) {
+  } catch (e) {
     // ignore
   }
 
@@ -222,6 +236,48 @@ function ECKeySign(hashBytes, priKeyBytes) {
   return hexStr2byteArray(signHex);
 }
 
+function signatureToAddress(msg, signatureBase64) {
+  let keyBytes = signatureToKeyBytes(msg, signatureBase64);
+  let address = CryptoUtils.computeAddress(keyBytes);
+  return CryptoUtils.getBase58CheckAddress(address);
+}
+
+function signatureToKeyBytes(msg, signatureBase64) {
+  let msgHash = SHA256(msg);
+  let signedBytes = CryptoUtils.signBytes(privateKey, msg);
+  let signedText = byteArray2hexStr(signedBytes);
+  let rHex = signedText.substr(0, 64);
+  let sHex = signedText.substr(64, 64);
+  let idHex = signedText.substr(128);
+
+  let recid = parseInt(idHex, 16);
+
+  var ec = new EC('secp256k1');
+
+  let pubKey = ec.recoverPubKey(msgHash, {
+    r: rHex,
+    s: sHex
+  }, recid);
+
+  return pubKeyToBytes(pubKey);
+}
+
+function pubKeyToBytes(pubkey) {
+  var x = pubkey.x;
+  var y = pubkey.y;
+  var xHex = x.toString('hex');
+  while (xHex.length < 64) {
+    xHex = "0" + xHex;
+  }
+  var yHex = y.toString('hex');
+  while (yHex.length < 64) {
+    yHex = "0" + yHex;
+  }
+  var pubkeyHex = "04" + xHex + yHex;
+  var pubkeyBytes = hexStr2byteArray(pubkeyHex);
+  return pubkeyBytes;
+}
+
 //toDO:
 //return 32 bytes
 function SHA256(msgBytes) {
@@ -253,6 +309,7 @@ module.exports = {
   getBase58CheckAddress,
   isAddressValid,
   getBase58CheckAddressFromPriKeyBase64String,
+  signatureToAddress,
   pkToAddress,
   decode58Check,
   signBytes,
